@@ -6,43 +6,23 @@ import {jsx} from '@emotion/core'
 
 import {Input, BookListUL, Spinner} from './components/lib'
 import {BookRow} from './components/book-row'
+import {useAsync} from 'utils/hooks'
 import {client} from './utils/api-client'
 import * as colors from 'styles/colors'
 import './bootstrap'
 
 function DiscoverBooksScreen() {
-  const [data, setData] = useState(null)
-  const [error, setError] = useState(null)
-  const [status, setStatus] = useState('idle')
   const [isQueryReady, setIsQueryReady] = useState(false)
-
-  const isLoading = status === 'loading'
-  const isSuccess = status === 'success'
-  const isError = status === 'error'
+  const {data, isLoading, isError, isSuccess, run, error} = useAsync()
 
   // query doesn't need to be reactive
   const queryRef = useRef('')
 
   useEffect(() => {
-    const run = async () => {
-      if (!isQueryReady) return
-      setStatus('loading')
-      setData(null)
-      try {
-        const data = await client(
-          `books?query=${encodeURIComponent(queryRef.current)}`,
-        )
-        setData(data)
-        setStatus('success')
-      } catch (error) {
-        setError(error)
-        setStatus('error')
-      }
-
-      setIsQueryReady(false)
-    }
-    run()
-  }, [isQueryReady])
+    if (!isQueryReady) return
+    run(client(`books?query=${encodeURIComponent(queryRef.current)}`))
+    setIsQueryReady(false)
+  }, [isQueryReady, run])
 
   function handleSearchSubmit(evt) {
     evt.preventDefault()
