@@ -1,8 +1,25 @@
 import styled from '@emotion/styled/macro' // macro import triggers babel macro to add displayName for styled compoennts automatically
+import {keyframes} from '@emotion/core'
 import {Dialog as ReachDialog} from '@reach/dialog'
+import {FaSpinner} from 'react-icons/fa'
 
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
+
+const spin = keyframes({
+  '0%': {
+    transform: 'rotate(0deg)',
+  },
+  '100%': {
+    transform: 'rotate(360deg)',
+  },
+})
+const Spinner = styled(FaSpinner)({
+  animation: `${spin} 1s linear infinite`,
+})
+Spinner.defaultProps = {
+  'aria-label': 'Loading',
+}
 
 const Button = styled.button(({variant}) => ({
   padding: '10px 15px',
@@ -58,4 +75,4 @@ const Dialog = styled(ReachDialog)({
   },
 })
 
-export {CircleButton, Dialog, Button, Input, FormGroup}
+export {CircleButton, Dialog, Button, Input, FormGroup, Spinner}
