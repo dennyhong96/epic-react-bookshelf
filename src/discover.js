@@ -10,7 +10,7 @@ import {client} from './utils/api-client'
 import * as colors from './styles/colors'
 import {useAsync} from './utils/hooks'
 
-function DiscoverBooksScreen() {
+function DiscoverBooksScreen({user}) {
   const {data, error, run, isLoading, isError, isSuccess} = useAsync()
   const [query, setQuery] = React.useState()
   const [queried, setQueried] = React.useState(false)
@@ -19,8 +19,12 @@ function DiscoverBooksScreen() {
     if (!queried) {
       return
     }
-    run(client(`books?query=${encodeURIComponent(query)}`))
-  }, [query, queried, run])
+    run(
+      client(`books?query=${encodeURIComponent(query)}`, {
+        headers: {Authorization: `Bearer ${user.token}`},
+      }),
+    )
+  }, [query, queried, run, user])
 
   function handleSearchSubmit(event) {
     event.preventDefault()

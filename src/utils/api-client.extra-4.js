@@ -1,17 +1,14 @@
 import * as auth from 'auth-provider'
 const apiURL = process.env.REACT_APP_API_URL
 
-function client(
-  endpoint,
-  {data, token, headers: customHeaders, ...customConfig} = {},
-) {
+function client(endpoint, {data, token, ...customConfig} = {}) {
   const config = {
     method: data ? 'POST' : 'GET',
-    body: data ? JSON.stringify(data) : undefined,
+    ...(data && {body: JSON.stringify(data)}),
     headers: {
-      Authorization: token ? `Bearer ${token}` : undefined,
-      'Content-Type': data ? 'application/json' : undefined,
-      ...customHeaders,
+      ...(token && {Authorization: `Bearer ${token}`}),
+      ...(data && {'Content-Type': 'application/json'}),
+      ...customConfig.headers,
     },
     ...customConfig,
   }

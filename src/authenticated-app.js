@@ -39,7 +39,7 @@ function AuthenticatedApp({user, logout}) {
           },
         }}
       >
-        <DiscoverBooksScreen />
+        <DiscoverBooksScreen user={user} />
       </div>
     </React.Fragment>
   )
