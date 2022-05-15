@@ -3,12 +3,11 @@ import {useQuery, useMutation, queryCache} from 'react-query'
 import {client} from 'utils/api-client'
 
 export function useListItems(user) {
-  const queryResult = useQuery({
+  return useQuery({
     queryKey: 'list-items',
-    queryFn: key =>
-      client(key, {token: user.token}).then(data => data.listItems),
+    queryFn: async key =>
+      await client(key, {token: user.token}).then(data => data.listItems),
   })
-  return queryResult
 }
 
 export function useListItem(user, bookId) {
@@ -17,47 +16,45 @@ export function useListItem(user, bookId) {
   return listItem
 }
 
-export function useUpdateListItem(user) {
-  const [update] = useMutation(
-    listItem => {
-      console.log({listItem})
-      client(`list-items/${listItem.id}`, {
+export function useUpdateListItem(user, {throwOnError = false} = {}) {
+  return useMutation(
+    async listItem =>
+      await client(`list-items/${listItem.id}`, {
         token: user.token,
         data: listItem,
         method: 'PUT',
-      })
-    },
+      }),
     {
       onSettled: () => queryCache.invalidateQueries('list-items'), // will re-fetch list-items query
+      throwOnError,
     },
   )
-  return [update]
 }
 
-export function useRemoveListItem(user) {
-  const [remove] = useMutation(
-    ({listItemId}) =>
-      client(`list-items/${listItemId}`, {
+export function useRemoveListItem(user, {throwOnError = false} = {}) {
+  return useMutation(
+    async ({listItemId}) =>
+      await client(`list-items/${listItemId}`, {
         token: user.token,
         method: 'DELETE',
       }),
     {
       onSettled: () => queryCache.invalidateQueries('list-items'),
+      throwOnError,
     },
   )
-  return [remove]
 }
 
-export function useCreateListItem(user) {
-  const [create] = useMutation(
-    listItem =>
-      client('list-items', {
+export function useCreateListItem(user, {throwOnError = false} = {}) {
+  return useMutation(
+    async listItem =>
+      await client('list-items', {
         token: user.token,
         data: listItem,
       }),
     {
       onSettled: () => queryCache.invalidateQueries('list-items'),
+      throwOnError,
     },
   )
-  return [create]
 }

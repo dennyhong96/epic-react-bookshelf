@@ -1,6 +1,5 @@
-import * as auth from 'auth-provider'
 import {queryCache} from 'react-query'
-
+import * as auth from 'auth-provider'
 const apiURL = process.env.REACT_APP_API_URL
 
 async function client(
@@ -22,6 +21,7 @@ async function client(
     if (response.status === 401) {
       queryCache.clear()
       await auth.logout()
+      // refresh the page for them
       window.location.assign(window.location)
       return Promise.reject({message: 'Please re-authenticate.'})
     }
