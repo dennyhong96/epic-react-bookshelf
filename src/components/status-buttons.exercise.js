@@ -10,10 +10,14 @@ import {
   FaTimesCircle,
 } from 'react-icons/fa'
 import Tooltip from '@reach/tooltip'
-import {useQuery, useMutation, queryCache} from 'react-query'
 
-import {client} from 'utils/api-client'
 import {useAsync} from 'utils/hooks'
+import {
+  useCreateListItem,
+  useListItem,
+  useRemoveListItem,
+  useUpdateListItem,
+} from 'utils/list-items'
 import {CircleButton, Spinner} from './lib'
 import * as colors from 'styles/colors'
 
@@ -49,46 +53,10 @@ function TooltipButton({label, highlight, onClick, icon, ...rest}) {
 }
 
 function StatusButtons({user, book}) {
-  const {data: listItems} = useQuery({
-    queryKey: 'list-items',
-    queryFn: key =>
-      client(key, {token: user.token}).then(data => data.listItems),
-  })
-  const listItem = listItems?.find(li => li.bookId === book.id) ?? null
-
-  const [update] = useMutation(
-    data =>
-      client(`list-items/${listItem.id}`, {
-        token: user.token,
-        data,
-        method: 'PUT',
-      }),
-    {
-      onSettled: () => queryCache.invalidateQueries('list-items'), // will re-fetch list-items query
-    },
-  )
-
-  const [remove] = useMutation(
-    () =>
-      client(`list-items/${listItem.id}`, {
-        token: user.token,
-        method: 'DELETE',
-      }),
-    {
-      onSettled: () => queryCache.invalidateQueries('list-items'),
-    },
-  )
-
-  const [create] = useMutation(
-    data =>
-      client('list-items', {
-        token: user.token,
-        data,
-      }),
-    {
-      onSettled: () => queryCache.invalidateQueries('list-items'),
-    },
-  )
+  const listItem = useListItem(user, book.id)
+  const [update] = useUpdateListItem(user)
+  const [remove] = useRemoveListItem(user)
+  const [create] = useCreateListItem(user)
 
   return (
     <React.Fragment>
@@ -97,14 +65,14 @@ function StatusButtons({user, book}) {
           <TooltipButton
             label="Unmark as read"
             highlight={colors.yellow}
-            onClick={update.bind(null, {finishDate: null})}
+            onClick={update.bind(null, {...listItem, finishDate: null})}
             icon={<FaBook />}
           />
         ) : (
           <TooltipButton
             label="Mark as read"
             highlight={colors.green}
-            onClick={update.bind(null, {finishDate: Date.now()})}
+            onClick={update.bind(null, {...listItem, finishDate: Date.now()})}
             icon={<FaCheckCircle />}
           />
         )
@@ -113,7 +81,7 @@ function StatusButtons({user, book}) {
         <TooltipButton
           label="Remove from list"
           highlight={colors.danger}
-          onClick={remove}
+          onClick={remove.bind(null, {listItemId: listItem.id})}
           icon={<FaMinusCircle />}
         />
       ) : (

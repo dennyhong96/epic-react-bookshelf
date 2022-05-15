@@ -6,14 +6,14 @@ import debounceFn from 'debounce-fn'
 import {FaRegCalendarAlt} from 'react-icons/fa'
 import Tooltip from '@reach/tooltip'
 import {useParams} from 'react-router-dom'
-import {useQuery, useMutation, queryCache} from 'react-query'
 
-import {client} from 'utils/api-client'
+import {useUpdateListItem, useListItem} from 'utils/list-items'
+import {useBook} from 'utils/books'
 import {formatDate} from 'utils/misc'
-import * as colors from 'styles/colors'
 import {Textarea} from 'components/lib'
 import {Rating} from 'components/rating'
 import {StatusButtons} from 'components/status-buttons'
+import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
 import bookPlaceholderSvg from 'assets/book-placeholder.svg'
 
@@ -29,20 +29,11 @@ const loadingBook = {
 function BookScreen({user}) {
   const {bookId} = useParams()
 
-  const {data} = useQuery({
-    queryKey: ['book', {bookId}],
-    queryFn: () => client(`books/${bookId}`, {token: user.token}),
-  })
-
-  const {data: listItems} = useQuery({
-    queryKey: 'list-items',
-    queryFn: key =>
-      client(key, {token: user.token}).then(data => data.listItems),
-  })
-
+  const {data} = useBook(bookId, user)
   const book = data?.book ?? loadingBook
   const {title, author, coverImageUrl, publisher, synopsis} = book
-  const listItem = listItems?.find(li => li.bookId === book.id) ?? null
+
+  const listItem = useListItem(user, book.id)
 
   return (
     <div>
@@ -124,17 +115,7 @@ function ListItemTimeframe({listItem}) {
 }
 
 function NotesTextarea({listItem, user}) {
-  const [update] = useMutation(
-    data =>
-      client(`list-items/${listItem.id}`, {
-        token: user.token,
-        data,
-        method: 'PUT',
-      }),
-    {
-      onSettled: () => queryCache.invalidateQueries('list-items'), // will re-fetch list-items query
-    },
-  )
+  const [update] = useUpdateListItem(user)
 
   const debouncedMutate = React.useMemo(
     () => debounceFn(update, {wait: 300}),
@@ -142,7 +123,7 @@ function NotesTextarea({listItem, user}) {
   )
 
   function handleNotesChange(e) {
-    debouncedMutate({id: listItem.id, notes: e.target.value})
+    debouncedMutate({...listItem, notes: e.target.value})
   }
 
   return (

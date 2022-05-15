@@ -1,8 +1,7 @@
 /** @jsx jsx */
 import {jsx} from '@emotion/core'
-import {useQuery} from 'react-query'
 
-import {client} from 'utils/api-client'
+import {useListItems} from 'utils/list-items'
 import {BookListUL} from './lib'
 import {BookRow} from './book-row'
 
@@ -12,11 +11,7 @@ function ListItemList({
   noListItems,
   noFilteredListItems,
 }) {
-  const {data: listItems} = useQuery({
-    queryKey: 'list-items',
-    queryFn: key =>
-      client(key, {token: user.token}).then(data => data.listItems),
-  })
+  const {data: listItems = []} = useListItems(user)
 
   const filteredListItems = listItems?.filter(filterListItems)
 
