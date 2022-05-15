@@ -5,7 +5,10 @@ import {client} from 'utils/api-client'
 export function useBook(bookId, user) {
   return useQuery({
     queryKey: ['book', {bookId}],
-    queryFn: async () => await client(`books/${bookId}`, {token: user.token}),
+    queryFn: async () => {
+      const {book} = await client(`books/${bookId}`, {token: user.token})
+      return book
+    },
   })
 }
 
@@ -16,15 +19,23 @@ export function useBookSearch(query, user) {
       await client(`books?query=${encodeURIComponent(query)}`, {
         token: user.token,
       }).then(data => data.books),
+    config: {
+      onSuccess(books) {
+        books.forEach(setQueryDataForBook)
+      },
+    },
   })
 }
 
 export async function refetchBookSearchQuery(user) {
   queryCache.removeQueries(['bookSearch'])
   await queryCache.prefetchQuery(['bookSearch', {query: ''}], async () => {
-    const books = await client(`books?query=${encodeURIComponent('')}`, {
+    return await client(`books?query=${encodeURIComponent('')}`, {
       token: user.token,
     }).then(data => data.books)
-    return books
   })
+}
+
+export function setQueryDataForBook(book) {
+  queryCache.setQueryData(['book', {bookId: book.id}], book)
 }
