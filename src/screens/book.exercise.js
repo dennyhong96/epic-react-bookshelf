@@ -10,7 +10,7 @@ import {useParams} from 'react-router-dom'
 import {useUpdateListItem, useListItem} from 'utils/list-items'
 import {useBook} from 'utils/books'
 import {formatDate} from 'utils/misc'
-import {ErrorMessage, Textarea} from 'components/lib'
+import {ErrorMessage, Spinner, Textarea} from 'components/lib'
 import {Rating} from 'components/rating'
 import {StatusButtons} from 'components/status-buttons'
 import * as colors from 'styles/colors'
@@ -115,7 +115,7 @@ function ListItemTimeframe({listItem}) {
 }
 
 function NotesTextarea({listItem, user}) {
-  const [update, {error, isError}] = useUpdateListItem(user)
+  const [update, {error, isError, isLoading}] = useUpdateListItem(user)
   const debouncedMutate = React.useMemo(
     () => debounceFn(update, {wait: 300}),
     [update],
@@ -148,12 +148,23 @@ function NotesTextarea({listItem, user}) {
           css={{marginLeft: 6, fontSize: '0.7em'}}
         />
       ) : null}
-      <Textarea
-        id="notes"
-        defaultValue={listItem.notes}
-        onChange={handleNotesChange}
-        css={{width: '100%', minHeight: 300}}
-      />
+      <div
+        css={{
+          position: 'relative',
+        }}
+      >
+        <Textarea
+          id="notes"
+          defaultValue={listItem.notes}
+          onChange={handleNotesChange}
+          css={{width: '100%', minHeight: 300}}
+        />
+        {isLoading && (
+          <Spinner
+            css={{position: 'absolute', right: '0.5rem', top: '0.5rem'}}
+          />
+        )}
+      </div>
     </React.Fragment>
   )
 }
