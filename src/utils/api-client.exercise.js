@@ -19,7 +19,7 @@ async function client(
 
   return window.fetch(`${apiURL}/${endpoint}`, config).then(async response => {
     if (response.status === 401) {
-      queryCache.clear()
+      queryCache.clear() // Clear cache on logout
       await auth.logout()
       // refresh the page for them
       window.location.assign(window.location)

@@ -15,24 +15,11 @@ import {Rating} from 'components/rating'
 import {StatusButtons} from 'components/status-buttons'
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
-import bookPlaceholderSvg from 'assets/book-placeholder.svg'
-
-const loadingBook = {
-  title: 'Loading...',
-  author: 'loading...',
-  coverImageUrl: bookPlaceholderSvg,
-  publisher: 'Loading Publishing',
-  synopsis: 'Loading...',
-  loadingBook: true,
-}
 
 function BookScreen({user}) {
   const {bookId} = useParams()
-
-  const {data} = useBook(bookId, user)
-  const book = data ?? loadingBook
+  const {data: book} = useBook(bookId, user)
   const {title, author, coverImageUrl, publisher, synopsis} = book
-
   const listItem = useListItem(user, book.id)
 
   return (
@@ -140,14 +127,14 @@ function NotesTextarea({listItem, user}) {
         >
           Notes
         </label>
+        {isError ? (
+          <ErrorMessage
+            error={error}
+            variant="inline"
+            css={{marginLeft: 6, fontSize: '0.7em'}}
+          />
+        ) : null}
       </div>
-      {isError ? (
-        <ErrorMessage
-          error={error}
-          variant="inline"
-          css={{marginLeft: 6, fontSize: '0.7em'}}
-        />
-      ) : null}
       <div
         css={{
           position: 'relative',

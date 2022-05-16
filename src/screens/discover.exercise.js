@@ -8,32 +8,15 @@ import {FaSearch, FaTimes} from 'react-icons/fa'
 import {useBookSearch, refetchBookSearchQuery} from 'utils/books'
 import {BookRow} from 'components/book-row'
 import {BookListUL, Spinner, Input} from 'components/lib'
-import bookPlaceholderSvg from 'assets/book-placeholder.svg'
 import * as colors from 'styles/colors'
-
-const loadingBook = {
-  title: 'Loading...',
-  author: 'loading...',
-  coverImageUrl: bookPlaceholderSvg,
-  publisher: 'Loading Publishing',
-  synopsis: 'Loading...',
-  loadingBook: true,
-}
-
-const loadingBooks = Array.from({length: 10}, (v, index) => ({
-  id: `loading-book-${index}`,
-  ...loadingBook,
-}))
 
 function DiscoverBooksScreen({user}) {
   const [query, setQuery] = useState('')
   const [queried, setQueried] = useState(false)
-  const {data, error, isLoading, isError, isSuccess} = useBookSearch(
+  const {books, error, isLoading, isError, isSuccess} = useBookSearch(
     query,
     user,
   )
-
-  const books = data ?? loadingBooks
 
   function handleSearchSubmit(event) {
     event.preventDefault()
@@ -43,10 +26,11 @@ function DiscoverBooksScreen({user}) {
 
   useEffect(() => {
     return () => {
+      // Remove all book search from cache
+      // and triggers a refetch
       refetchBookSearchQuery(user)
     }
-    // eslint-disable-next-line
-  }, [])
+  }, [user])
 
   return (
     <div>

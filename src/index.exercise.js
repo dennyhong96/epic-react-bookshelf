@@ -1,9 +1,10 @@
-import {ReactQueryConfigProvider} from 'react-query'
-import {loadDevTools} from './dev-tools/load'
-import './bootstrap'
 import * as React from 'react'
 import {createRoot} from 'react-dom/client'
+import {ReactQueryConfigProvider} from 'react-query'
+
 import {App} from './app'
+import {loadDevTools} from './dev-tools/load'
+import './bootstrap'
 
 const queryConfig = {
   queries: {

@@ -4,7 +4,7 @@ import {client} from 'utils/api-client'
 import {setQueryDataForBook} from './books.exercise'
 
 export function useListItems(user) {
-  return useQuery({
+  const {data: listItems} = useQuery({
     queryKey: 'list-items',
     queryFn: async key =>
       await client(key, {token: user.token}).then(data => data.listItems),
@@ -14,12 +14,21 @@ export function useListItems(user) {
       },
     },
   })
+  return listItems ?? []
 }
 
 export function useListItem(user, bookId) {
-  const {data: listItems} = useListItems(user)
+  const listItems = useListItems(user)
   const listItem = listItems?.find(li => li.bookId === bookId) ?? null
   return listItem
+}
+
+const defaultMutationOptions = {
+  onSettled: () => queryCache.invalidateQueries('list-items'), // will re-fetch list-items query
+  onerror: (err, variables, recover) => {
+    if (typeof recover !== 'function') return
+    recover()
+  },
 }
 
 export function useUpdateListItem(user, {throwOnError = false} = {}) {
@@ -31,8 +40,19 @@ export function useUpdateListItem(user, {throwOnError = false} = {}) {
         method: 'PUT',
       }),
     {
-      onSettled: () => queryCache.invalidateQueries('list-items'), // will re-fetch list-items query
+      ...defaultMutationOptions,
       throwOnError,
+      onMutate(updatedItem) {
+        const prevListItems = queryCache.getQueryData('list-items')
+        queryCache.setQueryData('list-items', prev =>
+          prev.map(li =>
+            li.id === updatedItem.id ? {...li, ...updatedItem} : li,
+          ),
+        )
+        const recover = () =>
+          queryCache.setQueryData('list-items', prevListItems)
+        return recover
+      },
     },
   )
 }
@@ -45,8 +65,17 @@ export function useRemoveListItem(user, {throwOnError = false} = {}) {
         method: 'DELETE',
       }),
     {
-      onSettled: () => queryCache.invalidateQueries('list-items'),
+      ...defaultMutationOptions,
       throwOnError,
+      onMutate({listItemId}) {
+        const prevListItems = queryCache.getQueryData('list-items')
+        queryCache.setQueryData('list-items', prev =>
+          prev.filter(li => li.id !== listItemId),
+        )
+        const recover = () =>
+          queryCache.setQueryData('list-items', prevListItems)
+        return recover
+      },
     },
   )
 }
@@ -59,8 +88,15 @@ export function useCreateListItem(user, {throwOnError = false} = {}) {
         data: listItem,
       }),
     {
-      onSettled: () => queryCache.invalidateQueries('list-items'),
+      ...defaultMutationOptions,
       throwOnError,
+      onMutate({bookId}) {
+        const prevListItems = queryCache.getQueryData('list-items')
+        queryCache.setQueryData('list-items', prev => [...prev, bookId])
+        const recover = () =>
+          queryCache.setQueryData('list-items', prevListItems)
+        return recover
+      },
     },
   )
 }
