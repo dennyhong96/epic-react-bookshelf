@@ -1,5 +1,5 @@
 import React from 'react'
-import {render, screen} from '@testing-library/react'
+import {render, screen, within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import {Modal, ModalContents, ModalOpenButton} from '../modal'
@@ -19,13 +19,18 @@ test('can be opened and closed', async () => {
       </ModalContents>
     </Modal>,
   )
+  // screen.debug()
 
   await userEvent.click(screen.getByRole('button', {name: /Open/i}))
   const modal = screen.getByRole('dialog') // added by reach modal
   expect(modal).toBeInTheDocument()
   expect(modal).toHaveAttribute('aria-label', label)
-  expect(screen.getByRole('heading', {name: title})).toBeInTheDocument()
-  expect(screen.getByText(content)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', {name: /Close/i}))
+  // screen.debug() // prints out markup
+
+  const inModal = within(modal) // to scope queries with in modal, same usage as screen
+  expect(inModal.getByRole('heading', {name: title})).toBeInTheDocument()
+  expect(inModal.getByText(content)).toBeInTheDocument()
+
+  await userEvent.click(inModal.getByRole('button', {name: /Close/i}))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
