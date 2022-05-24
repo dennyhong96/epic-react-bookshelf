@@ -7,13 +7,10 @@ import {buildUser} from 'test/generate'
 import * as auth from 'auth-provider'
 import {AppProviders} from 'context'
 import * as usersDB from 'test/data/users'
+import userEvent from '@testing-library/user-event'
 
-export const render = async (
-  ui,
-  {route = '/list', user, ...renderOptions} = {},
-) => {
+const render = async (ui, {route = '/list', user, ...renderOptions} = {}) => {
   user = typeof user === 'undefined' ? await loginUser() : user
-  console.log({user})
   window.history.pushState({}, 'Test Page', route)
   const returnValues = {
     ..._render(ui, {
@@ -26,7 +23,7 @@ export const render = async (
   return returnValues
 }
 
-export const loginUser = async () => {
+const loginUser = async () => {
   const user = buildUser()
   await usersDB.create(user)
   const authenticatedUser = await usersDB.authenticate(user)
@@ -34,10 +31,13 @@ export const loginUser = async () => {
   return authenticatedUser
 }
 
-export const waitForLoadingToFinish = async () => {
+const waitForLoadingToFinish = async () => {
   // Will wait until element no longer returns (empty array)
   await waitForElementToBeRemoved(() => [
     ...screen.queryAllByLabelText(/loading/i),
     ...screen.queryAllByText(/loading/i),
   ])
 }
+
+export * from '@testing-library/react'
+export {render, userEvent, loginUser, waitForLoadingToFinish}
