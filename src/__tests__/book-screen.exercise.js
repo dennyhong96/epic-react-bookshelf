@@ -11,6 +11,7 @@ import {
   loginUser,
 } from 'test/app-test-utils'
 import faker from 'faker'
+import {server, rest} from 'test/server'
 
 const renderBookScreen = async ({listItem, user, book} = {}) => {
   if (user === undefined) {
@@ -176,6 +177,69 @@ describe('App', () => {
 
     expect(await listItemsDB.read(listItem.id)).toMatchObject({
       notes: newNotes,
+    })
+  })
+
+  describe('console errors', () => {
+    beforeAll(() => {
+      jest.spyOn(console, 'error').mockImplementation(() => {})
+    })
+
+    afterAll(() => {
+      console.error.mockRestore()
+    })
+
+    test('shows an error message when the book fails to load', async () => {
+      await renderBookScreen({
+        book: buildBook(),
+        listItem: null,
+      })
+      expect(
+        (await screen.findByRole('alert')).textContent,
+      ).toMatchInlineSnapshot(`"There was an error: Book not found"`)
+      expect(console.error).toHaveBeenCalled()
+    })
+
+    test('note update failures are displayed', async () => {
+      // Overwrite endpoint to return a 400 error
+      const apiURL = process.env.REACT_APP_API_URL
+      const testErrorMessage = '__test_error_message__'
+      server.use(
+        rest.put(`${apiURL}/list-items/:listItemId`, async (req, res, ctx) => {
+          return res(
+            ctx.status(400),
+            ctx.json({status: 400, message: testErrorMessage}),
+          )
+        }),
+      )
+
+      // using fake timers to skip debounce time
+      jest.useFakeTimers()
+
+      const {listItem} = await renderBookScreen()
+
+      const newNotes = faker.lorem.words()
+      const notesTextarea = screen.getByRole('textbox', {name: /notes/i})
+
+      // Must setup userEvent to use advanceTimers when using fake timers
+      const fakeTimerUserEvent = userEvent.setup({
+        advanceTimers: () => jest.runOnlyPendingTimers(),
+      })
+      await fakeTimerUserEvent.clear(notesTextarea)
+      await fakeTimerUserEvent.type(notesTextarea, newNotes)
+
+      // wait for the loading spinner to show up
+      await screen.findByLabelText(/loading/i)
+      // wait for the loading spinner to go away
+      await waitForLoadingToFinish()
+
+      expect(
+        (await screen.findByRole('alert')).textContent,
+      ).toMatchInlineSnapshot(`"There was an error: ${testErrorMessage}"`)
+      expect(console.error).toHaveBeenCalled()
+      expect(await listItemsDB.read(listItem.id)).not.toMatchObject({
+        notes: newNotes,
+      })
     })
   })
 })
